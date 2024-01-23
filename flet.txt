@@ -1,0 +1,11 @@
+pip install -r requirements.txt
+
+py -3.10 -m venv .venv
+
+ cd venv\Scripts | activate
+
+更换为阿里云源，并重新安装pandas
+pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
+
+flet run 
