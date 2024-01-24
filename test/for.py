@@ -1,31 +1,19 @@
-class _Base:
-    name = ""
+APIS = {"a": "A", "b": "B"}
 
-    @classmethod
-    def Pr():
-        raise NotImplementedError
+# for k in APIS:
+#     print(k)
 
-
-class A(_Base):
-    name = "A"
-
-    @classmethod
-    def Pr():
-        print("这是$name")
+# for v in APIS.values():
+#     print(v)
 
 
-class B(_Base):
-    name = "A"
+# for k, v in APIS.items():
+#     print(k, v)
 
-    @classmethod
-    def Pr():
-        print("这是$name")
+# for item in APIS.items():
+#     print(item[0], item[1])
 
+# print(list(APIS.keys()))
 
-APIS = {"A": A, "B": B}
-
-
-urls = {k: {"index": -1, "values": []} for k in APIS}
-
-value = list(APIS.keys())[0]
-print(value)
+apis_temp = {k: v + "1" for k, v in APIS.items()}
+print(apis_temp)
