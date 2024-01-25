@@ -1,6 +1,5 @@
 import random
 from typing import List, Generator, Optional
-
 from utils import HTMLSession
 
 
@@ -16,20 +15,25 @@ class _Base:
     def set_page(cls, page_num: int):
         cls.page = page_num
 
-    # 得到图片地址
+    # 图片地址生成器 (src1,src2...)
     @classmethod
     def image_url_generator(cls):
         while True:
+            ## 设置页码
+            # 假如是初始 None 随机获取页码
             if cls.page_num is None:
                 cls.page_num = random.randint(1, cls.max_page)
-            else:
+            else:  # 假如超过最大值 重置为第一页
                 if cls.page_num > cls.max_page:
                     cls.page_num = 1
+            # 假如page_list (图片list)
             if not cls.page_list:
                 cls.page_list.extend(cls._get_page_list(cls.page_num))
-            detail_url = cls.page_list.pop(0)
+            detail_url = cls.page_list.pop(0)  # 详情页地址 page_list
             for src in cls._get_image_url(detail_url):
+                # return
                 yield src
+
             cls.page_num += 1
 
     @classmethod
@@ -47,7 +51,6 @@ class CiYuanDao(_Base):
     max_page = 451
     page_list = []
 
-    # 重写父类的方法
     @classmethod
     def _get_image_url(cls, detail_url):
         # 获取里面的图片
@@ -62,7 +65,7 @@ class CiYuanDao(_Base):
     @classmethod
     def _get_page_list(cls, page_num: int):
         # 获取此page下面的所有相关url
-        url = cls.page_url.format(page_num=page_num)
+        url = cls.page_url.format(page_num=page_num)  # 拼装地址
         session = HTMLSession()
         resp = session.get(url)
         hrefs = resp.html.xpath('//div[@class="pics"]//a[@class="tits grey" and @href]')
@@ -74,4 +77,9 @@ class CiYuanDao(_Base):
         return res
 
 
-APIS = {"ciyuandao": CiYuanDao}
+class Imgapi:
+    def get_img():
+        return "https://imgapi.cn/api.php?fl=dongman&gs=images"
+
+
+APIS = {"次元岛cosplay": CiYuanDao}

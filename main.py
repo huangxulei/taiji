@@ -1,11 +1,11 @@
 from importlib import import_module
 
-import flet 
+import flet
 from flet import Tabs, Tab, Page, Stack, ProgressBar
 from settings import navigation_tabs
 
-class NavigationBar(Stack):
 
+class NavigationBar(Stack):
     def __init__(self, page: Page):
         self.page = page
         self.tabs = Tabs(expand=1)
@@ -16,7 +16,7 @@ class NavigationBar(Stack):
                 continue
             icon = navigation[0]
             text = navigation[1]
-            self.tabs_list.append(Tab(content=content,icon=icon, text=text))
+            self.tabs_list.append(Tab(content=content, icon=icon, text=text))
         self.tabs.tabs.extend(self.tabs_list)
         self.tabs.on_change = lambda e: self.tab_init_event(e.data)
         super(NavigationBar, self).__init__(controls=[self.tabs], expand=True)
@@ -31,10 +31,15 @@ class NavigationBar(Stack):
             module_file = import_module("views." + module_name)
             return module_file.ViewPage(self.page)
         except Exception as e:
-            print("getpage",e)
+            print("getpage", e)
+
 
 def main(page: Page):
     page.title = "太·极"
+    progress_bar = ProgressBar(visible=False)
+    page.splash = progress_bar
     t = NavigationBar(page)
     page.add(t)
+
+
 flet.app(target=main, assets_dir="assets")
