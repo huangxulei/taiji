@@ -1,39 +1,50 @@
 import flet
 from flet import (
+    Image,
     Container,
     Stack,
     FloatingActionButton,
-    Row,
-    alignment,
-    Column,
-    Image,
     Page,
-    margin,
+    Row,
+    UserControl,
     icons,
-    Dropdown,
-    dropdown,
+    Text,
+    MainAxisAlignment,
+    TextField,
+    TextAlign,
+    IconButton,
 )
-from utils import HTMLSession
+
+
+class Counter(UserControl):
+    def build(self):
+        self.txt_number = TextField(value="0", text_align=TextAlign.RIGHT, width=100)
+        return Row(
+            [
+                IconButton(icons.REMOVE, on_click=self.minus_click),
+                self.txt_number,
+                IconButton(icons.ADD, on_click=self.plus_click),
+            ],
+            alignment=MainAxisAlignment.CENTER,
+        )
+
+    def minus_click(self, e):
+        self.txt_number.value = str(int(self.txt_number.value) - 1)
+        self.update()
+
+    def plus_click(self, e):
+        self.txt_number.value = str(int(self.txt_number.value) + 1)
+        self.update()
 
 
 def main(page: Page):
-    page.title = "太·极"
-    c = Container(margin=10, alignment=alignment.center, expand=True)
-    url = "https://imgapi.cn/api.php?fl=dongman&gs=images"
-    c = Image(src=url)
+    page.title = "Flet counter example"
+    page.vertical_alignment = MainAxisAlignment.CENTER
+    page.update()
 
-    save_btn = Container(
-        FloatingActionButton(
-            icon=icons.SAVE_ALT_ROUNDED,
-            on_click=save_img,
-            width=50,
-        ),
-        opacity=0.2,
-        right=20,
-        bottom=20,
-    )
-    s = Stack(controls=[c, save_btn])
-    page.add(s)
+    counter = Counter()
+
+    page.add(counter)
 
 
-flet.app(target=main)
+flet.app(main)
