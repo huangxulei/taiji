@@ -1,6 +1,7 @@
 import random
 from typing import List, Generator, Optional
 from utils import HTMLSession
+import requests
 
 
 class _Base:
@@ -77,9 +78,17 @@ class CiYuanDao(_Base):
         return res
 
 
-class Imgapi:
-    def get_img():
-        return "https://imgapi.cn/api.php?fl=dongman&gs=images"
+class Imgapi(_Base):
+    page_url = "https://imgapi.cn/api.php?fl=fengjing&gs=images"
+    num = 10
+
+    @classmethod
+    def image_url_generator(cls):
+        for i in range(cls.num):
+            pic_url = requests.get(cls.page_url).url
+            print(pic_url)
+            if pic_url:
+                yield pic_url
 
 
-APIS = {"次元岛cosplay": CiYuanDao}
+APIS = {"次元岛cosplay": CiYuanDao, "IMGAPI 真人/动漫/风景": Imgapi}
