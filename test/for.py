@@ -15,5 +15,10 @@ APIS = {"a": "A", "b": "B"}
 
 # print(list(APIS.keys()))
 
-apis_temp = {k: v + "1" for k, v in APIS.items()}
-print(apis_temp)
+# apis_temp = {k: v + "1" for k, v in APIS.items()}
+# print(apis_temp)
+
+lst = ["dongman", "meizi", "fengjing", "suiji"]
+lsts = [f"https://imgapi.cn/api.php?fl={k}&gs=images" for k in lst]
+
+print(lsts)
