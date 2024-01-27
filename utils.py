@@ -9,6 +9,7 @@ from requests_html import HTMLSession as _HTMLSession, HTMLResponse
 from pathlib import Path
 import urllib.parse as uparse
 from pathlib import Path
+from flet import IconButton, ButtonStyle, MaterialState, colors, BorderSide
 
 PICTURE = os.path.join(os.path.expanduser("~"), "Pictures")
 
@@ -32,6 +33,38 @@ class HTMLSession(_HTMLSession):
         super(HTMLSession, self).__init__(**kwargs)
         if headers:
             self.headers.update(headers)
+
+
+"""
+ibs 是一个dict
+ {
+    "icon": icons.DOWNLOAD, #图标
+    "tooltip": "下载", #提示语言
+    "fun": self.save_img, #点击后的函数
+    "size": 15, #大小 icon的尺寸,height width 为 1.5*15 
+}
+"""
+
+
+class MyButton(IconButton):
+    def __init__(self, ibs):
+        self.style = ButtonStyle(
+            color={
+                MaterialState.HOVERED: colors.BLUE,
+                MaterialState.DEFAULT: colors.GREY_700,
+            },
+            overlay_color=colors.TRANSPARENT,
+            # bgcolor=colors.GREY_200,
+        )
+        super(MyButton, self).__init__(
+            icon=ibs["icon"],
+            style=self.style,
+            tooltip=ibs["tooltip"],
+            on_click=ibs["fun"],
+            icon_size=ibs["size"],
+            # height=ibs["size"] * 1.5,
+            # width=ibs["size"] * 1.5,
+        )
 
 
 def snack_bar(page, message):

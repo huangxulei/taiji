@@ -78,9 +78,23 @@ class CiYuanDao(_Base):
         return res
 
 
-class Imgapi(_Base):
+class Imgapi_fj(_Base):
     page_url = "https://imgapi.cn/api.php?fl=fengjing&gs=images"
-    num = 10
+    num = 20
+
+    @classmethod
+    def image_url_generator(cls):
+        for i in range(cls.num):
+            session = HTMLSession()
+            pic_url = session.get(cls.page_url).url
+            print(pic_url)
+            if pic_url:
+                yield pic_url
+
+
+class Imgapi_zr(_Base):
+    page_url = "https://imgapi.cn/api.php?fl=meizi&gs=images"
+    num = 20
 
     @classmethod
     def image_url_generator(cls):
@@ -91,4 +105,4 @@ class Imgapi(_Base):
                 yield pic_url
 
 
-APIS = {"次元岛cosplay": CiYuanDao, "IMGAPI 真人/动漫/风景": Imgapi}
+APIS = {"次元岛cosplay": CiYuanDao, "IMGAPI 风景": Imgapi_fj, "IMGAPI 真人": Imgapi_zr}

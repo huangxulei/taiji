@@ -16,7 +16,7 @@ from flet import (
 )
 
 from methods.getimages import APIS
-from utils import download_named_image, snack_bar
+from utils import MyButton, download_named_image, snack_bar
 
 
 class ViewPage(Stack):
@@ -34,61 +34,73 @@ class ViewPage(Stack):
             border_color=colors.BLUE_500,
             border_width=2,
         )
-        self.content_area = Container(
-            margin=10, alignment=alignment.center, expand=True
-        )
+        self.content_area = Container(margin=5, alignment=alignment.center, expand=True)
         self.next_btn = Column(
             [
                 Row(
                     [
                         Container(
-                            FloatingActionButton(
-                                icon=icons.SKIP_PREVIOUS,
-                                on_click=self.back_look_image,
-                                width=30,
-                                height=30,
-                                tooltip="上一张",
+                            MyButton(
+                                {
+                                    "icon": icons.ARROW_CIRCLE_RIGHT_OUTLINED,
+                                    "tooltip": "下一张",
+                                    "fun": self.fresh_image,
+                                    "size": 40,
+                                }
                             ),
-                        ),
-                        Container(
-                            FloatingActionButton(
-                                icon=icons.SKIP_NEXT,
-                                on_click=self.fresh_image,
-                                width=30,
-                                height=30,
-                                tooltip="下一张",
-                            ),
-                        ),
-                        Container(
-                            FloatingActionButton(
-                                icon=icons.DOWNLOAD,
-                                on_click=self.save_img,
-                                width=30,
-                                height=30,
-                                tooltip="下载",
-                            ),
+                            margin=margin.Margin(0, 0, 0, 100),
                         ),
                     ],
+                    alignment="center",
                 )
             ],
+            alignment="end",
             opacity=0.8,
             animate_opacity=300,
+        )
+
+        self.panel = Container(
+            Row(
+                [
+                    Container(
+                        MyButton(
+                            {
+                                "icon": icons.ARROW_CIRCLE_LEFT_OUTLINED,
+                                "tooltip": "上一张",
+                                "fun": self.back_look_image,
+                                "size": 25,
+                            }
+                        )
+                    ),
+                    Container(
+                        MyButton(
+                            {
+                                "icon": icons.DOWNLOAD_FOR_OFFLINE_OUTLINED,
+                                "tooltip": "下载",
+                                "fun": self.save_img,
+                                "size": 25,
+                            }
+                        )
+                    ),
+                ],
+                alignment="left",
+            ),
+            bottom=20,
+            right=40,
+            width=150,
+            height=60,
+            bgcolor=colors.GREY_300,
+            border_radius=10,
+            opacity=0.8,
+            padding=5,
         )
 
         super(ViewPage, self).__init__(
             controls=[
                 self.content_area,
                 Container(self.resource_select, top=10, left=10),
-                Container(
-                    self.next_btn,
-                    width=150,
-                    height=40,
-                    bottom=10,
-                    right=20,
-                    bgcolor=colors.BLUE_GREY_100,
-                    padding=5,
-                    border_radius=10,
-                ),
+                self.next_btn,
+                self.panel,
             ],
             expand=True,
         )
@@ -144,17 +156,3 @@ class ViewPage(Stack):
                 snack_bar(self.page, f"{f}已保存")
         except Exception as e:
             snack_bar(self.page, f"保存失败: {e}")
-
-    def btn_opacity(self, e):
-        if self.next_btn.opacity == 0.5:
-            self.next_btn.opacity = 0.05
-        else:
-            self.next_btn.opacity = 0.5
-        self.update()
-
-    def back_btn_opacity(self, e):
-        if self.back_look_btn.opacity == 1:
-            self.back_look_btn.opacity = 0.8
-        else:
-            self.back_look_btn.opacity = 1
-        self.update()
