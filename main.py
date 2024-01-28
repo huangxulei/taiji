@@ -1,5 +1,10 @@
 from importlib import import_module
 
+try:
+    from views import index, mountain, rain
+except:
+    pass
+
 import flet
 from flet import Tabs, Tab, Page, Stack, ProgressBar
 from settings import navigation_tabs
