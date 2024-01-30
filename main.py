@@ -1,50 +1,328 @@
-from importlib import import_module
-
-try:
-    from views import index, mountain, rain
-except:
-    pass
-
-import flet
-from flet import Tabs, Tab, Page, Stack, ProgressBar
-from settings import navigation_tabs
+import time
+import flet as ft
+import os
 
 
-class NavigationBar(Stack):
-    def __init__(self, page: Page):
-        self.page = page
-        self.tabs = Tabs(expand=1)
-        self.tabs_list = []
-        for navigation in navigation_tabs:
-            content = self.get_page(navigation[2])
-            if not content:
-                continue
-            icon = navigation[0]
-            text = navigation[1]
-            self.tabs_list.append(Tab(content=content, icon=icon, text=text))
-        self.tabs.tabs.extend(self.tabs_list)
-        self.tabs.on_change = lambda e: self.tab_init_event(e.data)
-        super(NavigationBar, self).__init__(controls=[self.tabs], expand=True)
+def example(page):
+    import flet.canvas as cv
 
-    def tab_init_event(self, index):
-        index = int(index)
-        if hasattr(self.tabs_list[index].content, "init_event"):
-            getattr(self.tabs_list[index].content, "init_event")()
+    url = "music/北国之春.mp3"
 
-    def get_page(self, module_name):
-        try:
-            module_file = import_module("views." + module_name)
-            return module_file.ViewPage(self.page)
-        except Exception as e:
-            print("getpage", e)
+    def convertMillis(millis):
+        seconds = int(millis / 1000) % 60
+        if seconds < 10:
+            seconds_str = f"0{seconds}"
+        else:
+            seconds_str = f"{seconds}"
+        minutes = int(millis / (1000 * 60)) % 60
+        return f"{minutes}:{seconds_str}"
+
+    class Song(ft.Row):
+        def __init__(self, song: str):
+            self.song = ft.Text(song)
+            self.container = ft.Container(
+                content=ft.Row([self.song], spacing=10),
+            )
+            super(Song, self).__init__(
+                controls=[self.container],
+                alignment="start",
+                scroll=None,
+                wrap=True,
+            )
+
+    class VolumeSlider(ft.GestureDetector):
+        def __init__(self, audio, on_change_volume):
+            super().__init__()
+            self.visible = False
+            self.audio = audio
+            self.previous_volume = 1
+            self.content = ft.Container(
+                width=100,
+                height=5,
+                content=cv.Canvas(
+                    shapes=[
+                        cv.Rect(
+                            x=0,
+                            y=0,
+                            height=4,
+                            border_radius=3,
+                            paint=ft.Paint(color=ft.colors.GREY_500),
+                            width=100,
+                        ),
+                        cv.Rect(
+                            x=0,
+                            y=0,
+                            height=4,
+                            border_radius=3,
+                            paint=ft.Paint(color=ft.colors.GREY_900),
+                            width=100,
+                        ),
+                        cv.Circle(
+                            x=100,
+                            y=2,
+                            radius=6,
+                            paint=ft.Paint(color=ft.colors.GREY_900),
+                        ),
+                    ]
+                ),
+            )
+            self.on_hover = self.change_cursor
+            self.on_pan_start = self.change_volume
+            self.on_pan_update = self.change_volume
+            self.on_change_volume = on_change_volume
+
+        def change_audio_volume(self, volume):
+            self.audio.volume = volume
+
+        def change_cursor(self, e: ft.HoverEvent):
+            e.control.mouse_cursor = ft.MouseCursor.CLICK
+            e.control.update()
+
+        def change_volume(self, e):
+            if e.local_x >= 0 and e.local_x <= self.content.width:
+                self.change_audio_volume((e.local_x) / self.content.width)
+                self.content.content.shapes[1].width = e.local_x  ## New volume
+                self.content.content.shapes[2].x = e.local_x  ## Thumb
+                self.on_change_volume()
+                self.page.update()
+
+        def mute(self):
+            self.previous_volume = self.audio.volume
+            self.content.content.shapes[1].width = 0
+            self.content.content.shapes[2].x = 0
+            self.audio.volume = 0
+
+        def unmute(self):
+            self.audio.volume = self.previous_volume
+            self.content.content.shapes[1].width = (
+                self.content.width * self.audio.volume
+            )
+            self.content.content.shapes[2].x = self.content.width * self.audio.volume
+            print("Unmute")
+
+    class Track(ft.GestureDetector):
+        def __init__(self, audio, on_change_position):
+            super().__init__()
+            self.visible = False
+            self.content = ft.Container(
+                content=cv.Canvas(
+                    on_resize=self.canvas_resized,
+                    shapes=[
+                        cv.Rect(
+                            x=0,
+                            y=0,
+                            height=5,
+                            border_radius=3,
+                            paint=ft.Paint(color=ft.colors.GREY_500),
+                            width=100,
+                        ),
+                        cv.Rect(
+                            x=0,
+                            y=0,
+                            height=5,
+                            border_radius=3,
+                            paint=ft.Paint(color=ft.colors.GREY_900),
+                            width=0,
+                        ),
+                    ],
+                ),
+                height=10,
+                width=float("inf"),
+            )
+            self.audio = audio
+            self.audio_duration = None
+            self.on_pan_start = self.find_position
+            self.on_pan_update = self.find_position
+            self.on_hover = self.change_cursor
+            self.on_change_position = on_change_position
+
+        def canvas_resized(self, e: cv.CanvasResizeEvent):
+            print("On resize:", e.width, e.height)
+            self.track_width = e.width
+            e.control.shapes[0].width = e.width
+            e.control.update()
+
+        def find_position(self, e):
+            position = int(self.audio_duration * e.local_x / self.track_width)
+            self.content.content.shapes[1].width = max(
+                0, min(e.local_x, self.track_width)
+            )
+            self.update()
+            self.on_change_position(position)
+
+        def change_cursor(self, e: ft.HoverEvent):
+            e.control.mouse_cursor = ft.MouseCursor.CLICK
+            e.control.update()
+
+    class AudioPlayer(ft.Column):
+        def __init__(self, url):
+            super().__init__(tight=True)
+            self.list = []
+            self.audio1 = ft.Audio(
+                src=url,  # 歌曲地址
+                autoplay=False,  # 自动播放
+                volume=1,  # 音量
+                balance=0,
+                on_loaded=self.audio_loaded,
+                on_duration_changed=lambda e: print("Duration changed:", e.data),
+                on_position_changed=self.change_position,
+                on_state_changed=self.state_changed,
+                on_seek_complete=lambda _: print("Seek complete"),
+            )
+            self.position = 0
+            self.track_canvas = Track(
+                audio=self.audio1, on_change_position=self.seek_position
+            )
+            self.play_button = ft.IconButton(
+                icon=ft.icons.PLAY_ARROW,
+                visible=False,
+                on_click=self.play,
+            )
+            self.pause_button = ft.IconButton(
+                icon=ft.icons.PAUSE,
+                visible=False,
+                on_click=self.pause,
+            )
+            self.position_duration = ft.Text()
+            self.track_name = ft.Text("歌曲名字")
+
+            self.volume_slider = VolumeSlider(
+                audio=self.audio1, on_change_volume=self.check_mute
+            )
+            self.volume_icon = ft.IconButton(
+                icon=ft.icons.VOLUME_UP,
+                visible=False,
+                on_click=self.volume_icon_clicked,
+            )
+            self.music_list = ft.ListView(width=200, height=200, spacing=10,padding=10)
+            self.controls = [
+                self.music_list,
+                self.track_canvas,
+                ft.Row(
+                    alignment=ft.MainAxisAlignment.SPACE_AROUND,
+                    controls=[
+                        self.track_name,
+                        self.play_button,
+                        self.pause_button,
+                        self.position_duration,
+                        ft.Row(
+                            [
+                                self.volume_icon,
+                                self.volume_slider,
+                            ]
+                        ),
+                    ],
+                ),
+            ]
+
+        # happens when example is added to the page (when user chooses the Audio control from the grid)
+        def did_mount(self):
+            self.page.overlay.append(self.audio1)
+            # self.track_canvas.audio_duration = self.audio1.get_duration()
+            self.page.update()
+
+        # happens when example is removed from the page (when user chooses different control group on the navigation rail)
+        def will_unmount(self):
+            self.page.overlay.remove(self.audio1)
+            self.page.update()
+
+        def audio_loaded(self, e):
+            time.sleep(0.1)
+            self.getmusic()
+            self.track_canvas.visible = True
+            self.track_name.value = self.audio1.src
+            self.position_duration.value = (
+                f"{convertMillis(0)} / {convertMillis(self.audio1.get_duration())}"
+            )
+            self.play_button.visible = True
+            self.volume_slider.visible = True
+            self.volume_icon.visible = True
+            self.track_canvas.audio_duration = self.audio1.get_duration()
+            self.page.update()
+
+        def getmusic(self):
+            path = os.path.join(os.getcwd(), "assets/music")
+            if len(os.listdir(path)) != 0:
+                for file in os.listdir(path):
+                    self.list.append(file)
+                    self.music_list.controls.append(Song(file))
+                    print("Found ", file)
+                    self.page.update()
+            else:
+                print("No audio file found")
+
+        def play(self, e):
+            if self.position != 0:
+                self.audio1.resume()
+
+            else:
+                self.audio1.play()
+            self.play_button.visible = False
+            self.pause_button.visible = True
+            self.page.update()
+
+        def pause(self, e):
+            self.audio1.pause()
+            self.play_button.visible = True
+            self.pause_button.visible = False
+            self.page.update()
+
+        def state_changed(self, e):
+            if e.data == "completed":
+                self.play_button.visible = True
+                self.pause_button.visible = False
+
+        def seek_position(self, position):
+            self.audio1.seek(position)
+            self.page.update()
+
+        def change_position(self, e):
+            self.position = e.data
+            self.position_duration.value = f"{convertMillis(int(e.data))} / {convertMillis(self.track_canvas.audio_duration)}"
+            self.track_canvas.content.content.shapes[1].width = (
+                int(e.data)
+                / self.track_canvas.audio_duration
+                * self.track_canvas.track_width
+            )
+            e.control.page.update()
+
+        def volume_icon_clicked(self, e):
+            if e.control.icon == ft.icons.VOLUME_UP:
+                e.control.icon = ft.icons.VOLUME_OFF
+                self.volume_slider.mute()
+            else:
+                e.control.icon = ft.icons.VOLUME_UP
+                self.volume_slider.unmute()
+            e.control.page.update()
+
+        def check_mute(self):
+            if (
+                int(self.audio1.volume * 100) == 0
+                and self.volume_icon.icon == ft.icons.VOLUME_UP
+            ):
+                self.volume_icon.icon = ft.icons.VOLUME_OFF
+                self.volume_slider.mute()
+                self.volume_icon.update()
+            elif (
+                int(self.audio1.volume * 100) != 0
+                and self.volume_icon.icon == ft.icons.VOLUME_OFF
+            ):
+                self.volume_icon.icon = ft.icons.VOLUME_UP
+                self.volume_slider.unmute()
+                self.volume_icon.update()
+
+    player = AudioPlayer(url=url)
+
+    return ft.Container(player, alignment=ft.alignment.center, expand=True)
 
 
-def main(page: Page):
-    page.title = "flet"
-    progress_bar = ProgressBar(visible=False)
-    page.splash = progress_bar
-    t = NavigationBar(page)
-    page.add(t)
+def main(page: ft.Page):
+    page.title = "Flet audio player example"
+    page.window_width = 500
+    page.window_height = 844
+
+    page.add(example(page))
 
 
-flet.app(target=main, assets_dir="assets")
+if __name__ == "__main__":
+    ft.app(target=main, assets_dir="assets")

@@ -11,6 +11,8 @@ import urllib.parse as uparse
 from pathlib import Path
 from flet import IconButton, ButtonStyle, MaterialState, colors, BorderSide
 
+CURR_PATH = Path(__file__).absolute().parent
+DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
 PICTURE = os.path.join(os.path.expanduser("~"), "Pictures")
 
 
@@ -88,3 +90,24 @@ def download_named_image(url):
     f = p.joinpath(file_name)
     f.write_bytes(resp.content)
     return f
+
+
+def download_url_content(url) -> HTMLResponse:
+    session = HTMLSession()
+    resp = session.get(url)
+    return resp
+
+
+def handle_redirect(url, session=None):
+    if session is None:
+        session = HTMLSession()
+    resp = session.get(url, stream=True)
+    return resp.url
+
+
+def ms_to_time(ms):
+    # 毫秒转换为时间格式
+    ms = int(ms)
+    minute, second = divmod(ms / 1000, 60)
+    minute = min(99, minute)
+    return "%02d:%02d" % (minute, second)
