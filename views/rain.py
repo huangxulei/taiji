@@ -143,7 +143,9 @@ class MusicList(Row):
     def set_musics(self, data: DataSong, first=False):
         if first:
             self.list.controls.clear()  # 清空列表
-        self.list.controls.append(Song(data, self.middle_select_callback))  # 加进ListView
+        self.list.controls.append(
+            Song(data, self.middle_select_callback)
+        )  # 加进ListView
         self.update()
 
     def next_music(self):
@@ -414,7 +416,6 @@ class ViewPage(Stack):
             vertical_alignment="center",
             expand=True,
         )
-
         super(ViewPage, self).__init__(
             controls=[self.row],
             expand=True,

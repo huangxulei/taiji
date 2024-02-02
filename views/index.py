@@ -10,19 +10,20 @@ from utils import one_shot_thread
 LIGHT = ("light", "光明")
 DARK = ("dark", "黑暗")
 
+
 class ThemeSwitch(Switch):
     def __init__(self, page: Page):
         super(ThemeSwitch, self).__init__(on_change=self.switch_theme, top=5, right=30)
         self.page = page
-        self.mode = page.client_storage.get("theme_mode") or LIGHT 
-        self.page.theme_mode = self.mode[0] 
-        self.label = self.mode[1] #文字
+        self.mode = page.client_storage.get("theme_mode") or LIGHT
+        self.page.theme_mode = self.mode[0]
+        self.label = self.mode[1]  # 文字
         self.update()
 
     def switch_theme(self, e):
         if self.page.theme_mode == DARK[0]:
             self.mode = LIGHT
-        else :
+        else:
             self.mode = DARK
         self.set_theme()
 
@@ -38,12 +39,12 @@ class ViewPage(Stack):
         self.page = page
         # 背景
         self.bg = Container(
-            content= BIG_TAICHI,#内容
+            content=BIG_TAICHI,  # 内容
             alignment=alignment.center,
-            rotate=transform.Rotate(0,alignment=alignment.center),
-            animate_rotation= animation.Animation(duration=2000, curve="linear"),
+            rotate=transform.Rotate(0, alignment=alignment.center),
+            animate_rotation=animation.Animation(duration=2000, curve="linear"),
             on_animation_end=self.auto_animate,
-            expand=True
+            expand=True,
         )
         self.clouds = []
         for i in range(randint(10, 20)):
@@ -66,10 +67,13 @@ class ViewPage(Stack):
             self.clouds.append(_cloud)
         self.theme_switch = ThemeSwitch(self.page)
         self.gzh_img = Container(content=GONGZHONGHAO, right=5, bottom=5)
-        self.warn_text = Text("数据均来源于网络，与本人无关！请自行判断数据的准确性！", right=20, bottom=1)
+        self.warn_text = Text(
+            "数据均来源于网络，与本人无关！请自行判断数据的准确性！", right=20, bottom=1
+        )
 
-        super(ViewPage,self).__init__(
-            controls=[self.bg,self.theme_switch, self.gzh_img,self.warn_text]+ self.clouds,
+        super(ViewPage, self).__init__(
+            controls=[self.bg, self.theme_switch, self.gzh_img, self.warn_text]
+            + self.clouds,
             expand=True,
         )
         self.init_animate()

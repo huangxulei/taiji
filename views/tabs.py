@@ -1,13 +1,5 @@
+from flet import Stack, Text, Tab, Tabs, Page
 from importlib import import_module
-
-try:
-    from views import index, mountain, rain
-except:
-    pass
-
-import flet
-from flet import Tabs, Tab, Page, Stack, ProgressBar
-from settings import navigation_tabs
 
 
 class NavigationBar(Stack):
@@ -39,12 +31,11 @@ class NavigationBar(Stack):
             print("getpage", e)
 
 
-def main(page: Page):
-    page.title = "flet"
-    progress_bar = ProgressBar(visible=False)
-    page.splash = progress_bar
-    t = NavigationBar(page)
-    page.add(t)
-
-
-flet.app(target=main, assets_dir="assets")
+class ViewPage(Stack):
+    def __init__(self, page):
+        self.page = page
+        self.t = NavigationBar(page)
+        super(ViewPage, self).__init__(
+            controls=[self.t],
+            expand=True,
+        )
