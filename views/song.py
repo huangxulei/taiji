@@ -44,7 +44,7 @@ class ViewPage(Stack):
 
     def init_event(self):  # 获取tabs第一页内容
         search_view = self.t.controls[0].tabs[0].content
-        print(search_view)
+        print(search_view.info)
 
         if not search_view.right_widget.music_list.list.controls:
             search_view.right_widget.search_content.search(None)

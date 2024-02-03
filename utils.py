@@ -14,6 +14,7 @@ from flet import IconButton, ButtonStyle, MaterialState, colors, BorderSide
 CURR_PATH = Path(__file__).absolute().parent
 DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
 PICTURE = os.path.join(os.path.expanduser("~"), "Pictures")
+PROXY_IP = "http://127.0.0.1:7890"
 
 
 def one_shot_thread(func, timeout=0.0):

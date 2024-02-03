@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from hashlib import md5
 from typing import Generator, Optional, List
 from flet import Container, alignment, animation, transform, Stack, Text
-from utils import HTMLSession
+from utils import HTMLSession, PROXY_IP
 
 
 # 实体类??

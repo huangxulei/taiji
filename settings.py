@@ -13,6 +13,7 @@ navigation_tabs = [
 
 song_tabs = [
     ["探索", "rain"],
+    # ["探索", "song_search"],
     ["我的歌单", "song_list"],
     ["本地音乐", "song_local"],
 ]
