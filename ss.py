@@ -188,6 +188,7 @@ class ViewPage(Stack):
 def main(page: Page):
     # Page.window_width
     page.title = "flet"
+    page.padding = 0
     t = ViewPage(page)
     page.add(t)
     t.init_event()
