@@ -11,6 +11,10 @@ from flet import (
     Image,
     Container,
     border,
+    ResponsiveRow,
+    Card,
+    Divider,
+    MainAxisAlignment,
 )
 
 from methods.getmusic import HIFINI, DataSong
@@ -139,29 +143,39 @@ class SearchSection(Row):
         )
 
 
-class PlaySection(Row):
-    def __init__(self, parent: "ViewPage", page):
-        print(page.window_width)
-        self.tx = Container(
-            content=Text("下半身"),
-            bgcolor=colors.AMBER_400,
-            height=200,
-            width=page.window_width,
+class AudioInfo(Container):
+    def __init__(self):
+        self.audio_photo = Card(
+            width=100,
+            height=100,
+            elevation=10,
         )
-        super(PlaySection, self).__init__(
-            controls=[self.tx],
-        )
+        self.audio_name = Text("", size=18)
+        self.audio_singer = Text("", size=14)
+        self.row = Row(controls=[self.audio_photo, self.audio_name, self.audio_singer])
+
+        super(AudioInfo, self).__init__(content=self.audio_photo)
+
+
+class PlaySection(ResponsiveRow):
+    def __init__(self, parent):
+        self.parent = parent
+        self.audio_info = AudioInfo()
+        self.rows = Row(controls=[self.audio_info])
+        self.tx = Container(content=self.rows, bgcolor=colors.AMBER_400, height=150)
+
+        super(PlaySection, self).__init__(controls=[self.tx])
 
 
 class ViewPage(Stack):
     def __init__(self, page):
         self.music_api = HIFINI
         self.top_widget = SearchSection(self)
-        self.bottom_widget = PlaySection(self, page)
-        self.column = Column(controls=[self.top_widget, self.bottom_widget])
-        super(ViewPage, self).__init__(
-            controls=[self.column],
+        self.bottom_widget = PlaySection(self)
+        self.column = Column(
+            [self.top_widget, self.bottom_widget],
         )
+        super(ViewPage, self).__init__(controls=[self.column], expand=True)
         self.page = page
 
     def init_event(self):
@@ -187,7 +201,7 @@ class ViewPage(Stack):
 
 def main(page: Page):
     # Page.window_width
-    page.title = "flet"
+    page.title = "播放器"
     page.padding = 0
     t = ViewPage(page)
     page.add(t)
