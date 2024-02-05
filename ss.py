@@ -165,22 +165,12 @@ class AudioInfo(Container):
             content=self.info,
             margin=margin.Margin(0, 0, 0, 100),
         )
-<<<<<<< HEAD
-=======
-        self.audio_name = Text("", size=18)
-        self.audio_singer = Text("", size=14)
-        self.row = Row(controls=[self.audio_photo,
-                       self.audio_name, self.audio_singer])
-
-        super(AudioInfo, self).__init__(content=self.audio_photo)
->>>>>>> 4414a9434d1f972856e17492e48ab113aaec2755
 
 
 class PlaySection(Column):
     def __init__(self, parent):
         self.parent = parent
         self.audio_info = AudioInfo()
-<<<<<<< HEAD
         self.row = Row(controls=[self.audio_info])
         self.tx = Container(
             self.row,
@@ -192,12 +182,6 @@ class PlaySection(Column):
             controls=[self.tx],
             alignment="end",
         )
-=======
-        self.rows = Row(controls=[self.audio_info])
-        self.tx = Container(content=self.rows,
-                            bgcolor=colors.AMBER_400, height=150)
-        super(PlaySection, self).__init__(controls=[self.tx], alignment='end')
->>>>>>> 4414a9434d1f972856e17492e48ab113aaec2755
 
 
 class ViewPage(Stack):
@@ -206,12 +190,8 @@ class ViewPage(Stack):
         self.top_widget = SearchSection(self)
         self.bottom_widget = PlaySection(self)
         super(ViewPage, self).__init__(
-<<<<<<< HEAD
             controls=[self.top_widget, self.bottom_widget], expand=True
         )
-=======
-            controls=[self.top_widget, self.bottom_widget], expand=True)
->>>>>>> 4414a9434d1f972856e17492e48ab113aaec2755
         self.page = page
 
     def init_event(self):
