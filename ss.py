@@ -15,6 +15,10 @@ from flet import (
     Card,
     Divider,
     MainAxisAlignment,
+    margin,
+    ListTile,
+    Icon,
+    icons,
 )
 
 from methods.getmusic import HIFINI, DataSong
@@ -59,6 +63,7 @@ class Song(Container):
             border_radius=10,
             border=border.all(width=1),
             width=340,
+            margin=margin.only(right=10, left=10),
         )
         self.__selected = False
 
@@ -139,32 +144,44 @@ class SearchSection(Row):
         self.music_list = MusicList(self.parent.select_callback)
         self.search_content = SearchCompoment(self.parent.search_callback)
         super(SearchSection, self).__init__(
-            controls=[self.music_list], wrap=True, spacing=10, height=520, scroll=True
+            controls=[self.music_list],
+            wrap=True,
+            scroll=True,
+            expand=True,
         )
 
 
 class AudioInfo(Container):
     def __init__(self):
-        self.audio_photo = Card(
-            width=100,
-            height=100,
-            elevation=10,
+        self.audio_name = Text("无题", size=18)
+        self.audio_singer = Text("佚名", size=14)
+
+        self.info = ListTile(
+            leading=Image(width=100, height=100, src="imgs/taichi.svg"),
+            title=self.audio_name,
+            subtitle=self.audio_singer,
         )
-        self.audio_name = Text("", size=18)
-        self.audio_singer = Text("", size=14)
-        self.row = Row(controls=[self.audio_photo, self.audio_name, self.audio_singer])
+        super(AudioInfo, self).__init__(
+            content=self.info,
+            margin=margin.Margin(0, 0, 0, 100),
+        )
 
-        super(AudioInfo, self).__init__(content=self.audio_photo)
 
-
-class PlaySection(ResponsiveRow):
+class PlaySection(Column):
     def __init__(self, parent):
         self.parent = parent
         self.audio_info = AudioInfo()
-        self.rows = Row(controls=[self.audio_info])
-        self.tx = Container(content=self.rows, bgcolor=colors.AMBER_400, height=150)
+        self.row = Row(controls=[self.audio_info])
+        self.tx = Container(
+            self.row,
+            bgcolor=colors.AMBER_100,
+            border=border.only(top=border.BorderSide(1, "grey")),
+        )
 
-        super(PlaySection, self).__init__(controls=[self.tx])
+        super(PlaySection, self).__init__(
+            controls=[self.tx],
+            alignment="end",
+        )
 
 
 class ViewPage(Stack):
@@ -172,10 +189,9 @@ class ViewPage(Stack):
         self.music_api = HIFINI
         self.top_widget = SearchSection(self)
         self.bottom_widget = PlaySection(self)
-        self.column = Column(
-            [self.top_widget, self.bottom_widget],
+        super(ViewPage, self).__init__(
+            controls=[self.top_widget, self.bottom_widget], expand=True
         )
-        super(ViewPage, self).__init__(controls=[self.column], expand=True)
         self.page = page
 
     def init_event(self):
@@ -208,4 +224,4 @@ def main(page: Page):
     t.init_event()
 
 
-flet.app(target=main)
+flet.app(target=main, assets_dir="assets")
