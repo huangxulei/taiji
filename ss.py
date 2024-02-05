@@ -152,19 +152,20 @@ class AudioInfo(Container):
         )
         self.audio_name = Text("", size=18)
         self.audio_singer = Text("", size=14)
-        self.row = Row(controls=[self.audio_photo, self.audio_name, self.audio_singer])
+        self.row = Row(controls=[self.audio_photo,
+                       self.audio_name, self.audio_singer])
 
         super(AudioInfo, self).__init__(content=self.audio_photo)
 
 
-class PlaySection(ResponsiveRow):
+class PlaySection(Column):
     def __init__(self, parent):
         self.parent = parent
         self.audio_info = AudioInfo()
         self.rows = Row(controls=[self.audio_info])
-        self.tx = Container(content=self.rows, bgcolor=colors.AMBER_400, height=150)
-
-        super(PlaySection, self).__init__(controls=[self.tx])
+        self.tx = Container(content=self.rows,
+                            bgcolor=colors.AMBER_400, height=150)
+        super(PlaySection, self).__init__(controls=[self.tx], alignment='end')
 
 
 class ViewPage(Stack):
@@ -172,10 +173,8 @@ class ViewPage(Stack):
         self.music_api = HIFINI
         self.top_widget = SearchSection(self)
         self.bottom_widget = PlaySection(self)
-        self.column = Column(
-            [self.top_widget, self.bottom_widget],
-        )
-        super(ViewPage, self).__init__(controls=[self.column], expand=True)
+        super(ViewPage, self).__init__(
+            controls=[self.top_widget, self.bottom_widget], expand=True)
         self.page = page
 
     def init_event(self):
