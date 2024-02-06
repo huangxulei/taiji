@@ -167,7 +167,7 @@ class AudioInfo(Container):
         )
 
 
-class PlaySection(Column):
+class PlaySection(Row):
     def __init__(self, parent):
         self.parent = parent
         self.audio_info = AudioInfo()
@@ -184,7 +184,7 @@ class PlaySection(Column):
         )
 
 
-class ViewPage(Stack):
+class ViewPage(Column):
     def __init__(self, page):
         self.music_api = HIFINI
         self.top_widget = SearchSection(self)

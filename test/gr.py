@@ -2,26 +2,27 @@ from flet import *
 
 
 def main(page: Page):
+    page.padding = 0
 
-    child = Column(
-        [
-            Image(
-                src="https://picsum.photos/150/150?1",
-            ),
-        ]
+    grs = GridView(runs_count=3, spacing=10, auto_scroll=True)
+
+    ListTile_Item = ListTile(
+        leading=Image(src="../assets/imgs/taichi.svg"),
+        title=Text("最好是名字"),
+        subtitle=Text("作者"),
     )
+
     item = Container(
-        content=child, border=border.all(10, colors.PINK_600), width=300, height=200
+        content=ListTile_Item,
+        # height=50,
+        # width=200,
+        border=border.all(10, colors.PINK_600),
     )
+    # item = Text("测试,,,,")
+    for i in range(40):
+        grs.controls.append(item)
 
-    row = Row(expand=True, spacing=50, wrap=True, run_spacing=20)
-
-    for i in range(60):
-        row.controls.append(item)
-
-    s = Stack([row])
-
-    page.add(s)
+    page.add(grs)
 
 
 app(target=main, assets_dir="assets")
