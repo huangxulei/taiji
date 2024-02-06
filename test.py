@@ -3,6 +3,7 @@ from flet import *
 
 def main(page: Page):
     page.padding = 0
+    page.title = "黄老五 播放器"
 
     def getImgSrc(i):
         return f"https://picsum.photos/200/200?{i}"
