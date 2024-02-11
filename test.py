@@ -32,6 +32,7 @@ def main(page: Page):
                                 width=100,
                             ),
                             margin=margin.Margin(0, 0, 0, 100),
+                            border=border.all(width=)
                         )
                     ],
                     alignment="center",
