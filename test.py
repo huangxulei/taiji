@@ -1,31 +1,54 @@
-import math
 from flet import *
 
 
 def main(page: Page):
     page.padding = 0
+    page.title = "黄老五 播放器"
 
-    # top_area = Row([Text("第一个显示区域"), Text("第一个显示区域")])
-    # lvs = ListView(expand=1, spacing=10, padding=20)
-    # grs = GridView(runs_count=3, spacing=30)
+    def getImgSrc(i):
+        return f"https://picsum.photos/200/200?{i}"
 
-    lv = Row(expand=True, spacing=50, wrap=True, run_spacing=20, scroll=True)
-    for i in range(100):
-        lv.controls.append(
-            Container(
-                content=Text(f"第{i}个"), bgcolor=colors.BLACK38, width=100, height=200
-            )
-        )
-
-    # topc = Column(
-    #     [top_area, lvs],
-    #     alignment="end",
-    # )
-    next_btn = Column(
+    top_row = Row(
         [
+            ElevatedButton(
+                "探索",
+                icon=icons.SEARCH,
+            ),
+            ElevatedButton(
+                "我的歌单",
+                icon=icons.LIST,
+            ),
+            ElevatedButton(
+                "本地歌曲",
+                icon=icons.LOCAL_ACTIVITY,
+            ),
+        ]
+    )
+    top = Container(
+        padding=5,
+        content=top_row,
+        height=50,
+    )
+
+    center = Container(
+        expand=1,
+    )
+    bottom = Container(
+        bgcolor=colors.BLUE,
+        height=100,
+        border=border.only(top=border.BorderSide(1, "black")),
+    )
+
+    row_list = Row(
+        scroll=ScrollMode.ALWAYS, expand=True, wrap=True, spacing=0, run_spacing=10
+    )
+
+    for i in range(1, 51):
+        row_list.controls.append(
             Container(
-                Row(
+                content=Row(
                     [
+<<<<<<< HEAD
                         Container(
                             FloatingActionButton(
                                 icon=icons.DOUBLE_ARROW_ROUNDED,
@@ -36,19 +59,47 @@ def main(page: Page):
                         )
                     ],
                     alignment="center",
+=======
+                        Image(
+                            src=getImgSrc(i),
+                            width=40,
+                            height=40,
+                            fit="cover",
+                            border_radius=10,
+                        ),
+                        Text(
+                            f"歌曲名字{i}",
+                            width=180,
+                            height=20,
+                            weight="bold",
+                            color=colors.WHITE,
+                        ),
+                        Text(
+                            f"歌手{i}",
+                            width=80,
+                            height=20,
+                            no_wrap=True,
+                            weight="bold",
+                            color=colors.WHITE,
+                        ),
+                    ]
+>>>>>>> 8bdd3aa9ee08ae7d6fe4a4acd7c475dcf38e5462
                 ),
-                bgcolor=colors.AMBER_100,
-                border=border.only(top=border.BorderSide(2, "grey")),
-            )
-        ],
-        alignment="end",
-    )
-    c = Stack(
-        controls=[lv, next_btn],
-        expand=True,
-    )
+                bgcolor=colors.BLACK,
+                padding=5,
+                opacity=0.7,
+                animate=300,
+                border_radius=10,
+                border=border.all(width=1),
+                width=320,
+                margin=margin.only(right=90, left=10, top=10, bottom=10),
+            ),
+        )
+    center.content = row_list
+
+    c = Column([top, center, bottom], expand=True, spacing=0)
 
     page.add(c)
 
 
-app(target=main, assets_dir="assets")
+app(target=main)
