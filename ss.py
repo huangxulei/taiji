@@ -1,25 +1,6 @@
 import flet
-from flet import (
-    Stack,
-    Text,
-    Page,
-    Column,
-    Row,
-    TextField,
-    FloatingActionButton,
-    colors,
-    Image,
-    Container,
-    border,
-    ResponsiveRow,
-    Card,
-    Divider,
-    MainAxisAlignment,
-    margin,
-    ListTile,
-    Icon,
-    icons,
-)
+from flet import ( Stack,  Text, Page, Column, Row,  TextField, FloatingActionButton, colors, \
+    Image, Container,  border,ResponsiveRow, Card, Divider, MainAxisAlignment, margin,ListTile,Icon,icons,)
 
 from methods.getmusic import HIFINI, DataSong
 from utils import snack_bar
