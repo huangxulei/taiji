@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from hashlib import md5
 from typing import Generator, Optional, List
 from flet import Container, alignment, animation, transform, Stack, Text
-from utils import HTMLSession, PROXY_IP
+from utils import HTMLSession
 
 
 # 实体类??
@@ -40,7 +40,7 @@ class HIFINI:
 
     # 推荐歌曲 列表页
     @classmethod
-    def recommend_musics(cls) -> List[Generator[DataSong, None, None]]:
+    def recommend_musics(cls) -> Generator[DataSong, None, None]:
         session = HTMLSession(cls.headers)
         res = session.get(cls.recommend_url)
         if res.status_code != 200:

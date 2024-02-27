@@ -78,6 +78,11 @@ class ViewPage(Stack):
         )
         self.init_animate()
 
+    def init_event(self):
+        self.auto_animate(None)
+        for i in range(len(self.clouds)):
+            self.auto_cloud_animate(None, i)
+
     def init_animate(self):
         one_shot_thread(partial(self.auto_animate, None), 5)
         for i in range(len(self.clouds)):
