@@ -406,7 +406,8 @@ class LeftPlaySection(Column):
 
 
 class ViewPage(Stack):
-    def __init__(self, page):
+    def __init__(self, page, songItemClick):
+        self.songItemClick = songItemClick
         self.info = "音乐搜索"
         self.music_api = HIFINI
         self.left_widget = LeftPlaySection(self)

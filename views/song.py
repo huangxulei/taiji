@@ -132,10 +132,14 @@ class AudioInfo(Container):
             ),
         )
 
+    def play_music(self, song: DataSong):
+        print("play ", song.name)
+
 
 class NavigationBar(ft.Stack):
-    def __init__(self, page: ft.Page):
+    def __init__(self, page: ft.Page, songItemClick):
         self.page = page
+        self.songItemClick = songItemClick
         self.tabs = ft.Tabs(expand=1)
         self.tabs_list = []
         for navigation in song_tabs:
@@ -161,7 +165,7 @@ class NavigationBar(ft.Stack):
     def get_page(self, module_name):
         try:
             module_file = import_module("views." + module_name)
-            return module_file.ViewPage(self.page)
+            return module_file.ViewPage(self.page, self.songItemClick)
         except Exception as e:
             print("getpage", e)
 
@@ -172,13 +176,17 @@ class ViewPage(ft.Stack):
     def __init__(self, page):
         self.is_first = True
         self.page = page
-        self.t = NavigationBar(page)
+        self.t = NavigationBar(page, self.songItemClick)
         self.b = AudioInfo(page)
         self.c = Column([self.t, self.b], expand=True, spacing=0)
         super(ViewPage, self).__init__(
             controls=[self.c],
             expand=True,
         )
+
+    # 获取子项点击后的操作
+    def songItemClick(self, song: DataSong):
+        self.b.play_music(song)
 
     def init_event(self):  # 获取tabs第一页内容
         search_view = self.t.controls[0].tabs[0].content

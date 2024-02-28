@@ -8,10 +8,10 @@ from methods.getlocal import DataSong, LocalSong
 # 点击 1.播放歌曲 2.更新page.overlay内容 3.更改index
 #
 class Song(Container):
-    def __init__(self, song: DataSong, select_callback):
+    def __init__(self, song: DataSong, songItemClick):
 
         self.song: DataSong = song
-        self.select_callback = select_callback
+        self.songItemClick = songItemClick
         self.cover = ft.Image(
             width=40, height=40, border_radius=10, fit="cover", src=song.cover
         )
@@ -66,7 +66,7 @@ class Song(Container):
             self.bgcolor = colors.BLUE_GREY_700
             self.opacity = 1
             self.update()
-            self.select_callback(self)  # 点击操作 AudioInfo.play_music(songItem)
+            self.songItemClick(self.song)  # 点击操作 AudioInfo.play_music(songItem)
         else:
             self.bgcolor = colors.BLUE_GREY_300
             self.opacity = 0.7
@@ -92,8 +92,9 @@ class PlayAudio(ft.Audio):
 
 
 class ViewPage(Stack):
-    def __init__(self, page):
+    def __init__(self, page, songItemClick):
         self.page = page
+        self.songItemClick = songItemClick
         self.songs = []
         self.pick_files_dialog = ft.FilePicker(on_result=self.pick_files_result)
         self.page.overlay.append(self.pick_files_dialog)
@@ -105,10 +106,11 @@ class ViewPage(Stack):
             padding=10,
         )
         self.panel = Container(
+            margin=ft.margin.only(left=10, top=10),
             content=ft.Column(
                 controls=[
                     Row(
-                        [
+                        controls=[
                             ElevatedButton(
                                 "添加音乐",
                                 icon=icons.FILE_OPEN,
@@ -118,11 +120,12 @@ class ViewPage(Stack):
                                 "清 空", icon=icons.CLEAR, on_click=self.clear_list
                             ),
                         ],
+                        spacing=20,
                     ),
                     self.song_list,
                 ],
                 alignment=ft.alignment.top_left,
-            )
+            ),
         )
 
         super(ViewPage, self).__init__(
@@ -133,14 +136,11 @@ class ViewPage(Stack):
     def pick_files_result(self, e: ft.FilePickerResultEvent):
         songPath = e.path if e.path else None
         if songPath != None:
-            songs = LocalSong.getFiles(songPath)
-            for song in songs:
-                self.song_list.controls.append(Song(song, self.select_callback))
+            self.songs = LocalSong.getFiles(songPath)
+            for song in self.songs:
+                self.song_list.controls.append(Song(song, self.songItemClick))
 
             self.page.update()
-
-    def select_callback(self):
-        print("select_callback")
 
     def init_event(self):
         print("local start")
