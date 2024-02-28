@@ -133,6 +133,7 @@ class AudioInfo(Container):
             ),
         )
 
+    # 添加到overlay中,修改播放内容
     def play_music(self, song: DataSong):
         print(song)
         self.playing_audio = PlayAudio(
