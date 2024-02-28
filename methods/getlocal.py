@@ -1,4 +1,3 @@
-# 歌曲实体类
 from dataclasses import dataclass, field
 from typing import Generator, Optional
 import os
@@ -7,7 +6,7 @@ from tinytag import TinyTag
 
 
 @dataclass
-class Song:
+class DataSong:
     isLocal: bool  # 是否本地
     cover: str  # 封面
     name: str  # 歌曲名称
@@ -19,15 +18,16 @@ class LocalSong:
     song_exts = [".mp3", ".flac", ".wma"]  # 支持的歌曲类型
 
     @classmethod
-    def getFiles(cls, file_dir) -> Generator[Song, None, None]:
-        path = os.path.join(os.getcwd(), file_dir)  # 获取文件夹内文件
-        if len(os.listdir(path)) != 0:
-            for file in os.listdir(path):
+    def getFiles(cls, file_dir) -> Generator[DataSong, None, None]:
+        path = os.path.join(os.getcwd(), file_dir)
+        files = os.listdir(path)
+        if files != 0:
+            for file in files:
                 if get_file_type(file) in cls.song_exts:
-                    file_path = file_dir + file
+                    file_path = os.path.join(file_dir, file)
                     res = cls.get_detail_song(file_path)
                     if res:
-                        yield Song(**res)
+                        yield DataSong(**res)
 
     @classmethod
     def get_detail_song(cls, file_path):

@@ -41,6 +41,7 @@ class NavigationBar(Stack):
 
 def main(page: Page):
     page.title = "flet"
+    page.padding = 0
     progress_bar = ProgressBar(visible=False)
     page.splash = progress_bar
     t = NavigationBar(page)

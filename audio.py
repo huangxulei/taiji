@@ -1,5 +1,5 @@
 from typing import Optional
-import flet
+import flet as ft
 from flet import (
     Page,
     GridView,
@@ -29,7 +29,6 @@ from flet import (
 from methods.getlocal import LocalSong, DataSong
 from utils import snack_bar, ms_to_time, byte_to_base64
 from tinytag import TinyTag
-
 
 g_curr = {"index": 0, "state": "", "song_list": [], "volume": 0.5}
 
@@ -121,7 +120,6 @@ class PlayAudio(Audio):
 
 
 class AudioInfo(Container):
-    print(g_curr["index"])
 
     def __init__(self):
         self.song: Optional[DataSong] = None
@@ -402,7 +400,8 @@ class AudioInfo(Container):
 class ViewPage(Column):
     def __init__(self, page):
         self.page = page
-        self.songs = LocalSong.getFiles("E:/music/")
+        self.add_btn = ft.ElevatedButton(text="测试", on_click=self.test_slider)
+        self.songs = LocalSong.getFiles("E:\music")
         self.mylist = GridView(
             expand=1,
             spacing=30,
@@ -416,9 +415,18 @@ class ViewPage(Column):
             self.mylist.controls.append(SongItem(song, self.select_callback))
 
         super(ViewPage, self).__init__(
-            controls=[self.mylist, self.bottom_widget],
+            controls=[self.add_btn, self.mylist, self.bottom_widget],
             expand=True,
             spacing=0,
+        )
+
+    def test_slider(self, e):
+        self.page.show_snack_bar(
+            ft.SnackBar(
+                content=ft.Text("test"),
+                action="ok",
+                open=True,
+            )
         )
 
     def select_callback(self, songItem: SongItem):
@@ -439,4 +447,4 @@ def main(page: Page):
     page.add(local)
 
 
-flet.app(target=main, assets_dir="assets")
+ft.app(target=main, assets_dir="assets")
