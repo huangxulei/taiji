@@ -6,6 +6,8 @@ from importlib import import_module
 from methods.getlocal import DataSong
 from settings import song_tabs
 
+gl = {"index": 0, "state": "", "song_list": [], "volume": 0.5}
+
 
 # 继承audio控件,添加song以及during 歌曲时长属性
 class PlayAudio(ft.Audio):
@@ -20,7 +22,8 @@ class PlayAudio(ft.Audio):
 
 # 音乐显示控制栏
 class AudioInfo(Container):
-    def __init__(self):
+    def __init__(self, page):
+        self.page = page
         self.song: Optional[DataSong] = None
         self.is_sliding = False
         self.song_name = Text("")
@@ -164,12 +167,13 @@ class NavigationBar(ft.Stack):
 
 
 class ViewPage(ft.Stack):
+    global gl
 
     def __init__(self, page):
         self.is_first = True
         self.page = page
         self.t = NavigationBar(page)
-        self.b = AudioInfo()
+        self.b = AudioInfo(page)
         self.c = Column([self.t, self.b], expand=True, spacing=0)
         super(ViewPage, self).__init__(
             controls=[self.c],

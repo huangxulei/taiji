@@ -5,8 +5,8 @@ import os
 from methods.getlocal import DataSong, LocalSong
 
 
-# 带有数据,事件的显示单元,
-# 点击歌曲,然后假如播放列表以及播放
+# 点击 1.播放歌曲 2.更新page.overlay内容 3.更改index
+#
 class Song(Container):
     def __init__(self, song: DataSong, select_callback):
 
