@@ -13,7 +13,7 @@ from settings import navigation_tabs
 class NavigationBar(Stack):
     def __init__(self, page: Page):
         self.page = page
-        self.tabs = Tabs(expand=1)
+        self.tabs = Tabs(expand=1, selected_index=0)
         self.tabs_list = []
         for navigation in navigation_tabs:
             content = self.get_page(navigation[2])  # 内容

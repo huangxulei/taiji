@@ -14,7 +14,6 @@ from flet import IconButton, ButtonStyle, MaterialState, colors, BorderSide
 CURR_PATH = Path(__file__).absolute().parent
 DESKTOP = os.path.join(os.path.expanduser("~"), "Desktop")
 PICTURE = os.path.join(os.path.expanduser("~"), "Pictures")
-PROXY_IP = "http://127.0.0.1:7890"
 
 
 def one_shot_thread(func, timeout=0.0):
@@ -112,3 +111,14 @@ def ms_to_time(ms):
     minute, second = divmod(ms / 1000, 60)
     minute = min(99, minute)
     return "%02d:%02d" % (minute, second)
+
+
+# 获取文件的类型
+def get_file_type(filename):
+    _, ext = os.path.splitext(filename)
+    return ext
+
+
+def byte_to_base64(data):
+    encoded_data = base64.b64encode(data)
+    return encoded_data.decode("utf-8")
