@@ -16,6 +16,7 @@ class NavigationBar(Stack):
             self.tabs_list.append(Tab(content=content, text=text))
         self.tabs.tabs.extend(self.tabs_list)
         self.tabs.on_change = lambda e: self.tab_init_event(e.data)  # 点击后的执行
+
         super(NavigationBar, self).__init__(controls=[self.tabs], expand=True)
 
     def tab_init_event(self, index):
