@@ -24,6 +24,7 @@ class PlayAudio(ft.Audio):
 class AudioInfo(Container):
     def __init__(self, page):
         self.page = page
+        self.playing_audio: Optional[PlayAudio] = None
         self.song: Optional[DataSong] = None
         self.is_sliding = False
         self.song_name = Text("")
@@ -133,7 +134,18 @@ class AudioInfo(Container):
         )
 
     def play_music(self, song: DataSong):
-        print("play ", song.name)
+        print(song)
+        self.playing_audio = PlayAudio(
+            song=song,
+            src=song.url,
+            autoplay=True,
+        )
+        self.page.overlay.append(self.playing_audio)
+        self.page.update()
+        self.playing_audio.autoplay = False
+        self.play_btn.selected = True
+        self.playing_audio.play()
+        self.song_slider.value = "0"
 
 
 class NavigationBar(ft.Stack):
