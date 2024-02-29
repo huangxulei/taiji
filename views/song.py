@@ -5,8 +5,10 @@ from flet import Text, Container, Column, Row, IconButton, Icon, Image, colors, 
 from importlib import import_module
 from methods.getlocal import DataSong
 from settings import song_tabs
+from utils import ms_to_time
+from tinytag import TinyTag
 
-gl = {"index": 0, "state": "", "song_list": [], "volume": 0.5}
+gl = {"index": 1, "state": "", "song_list": [], "volume": 0.5}
 
 
 # 继承audio控件,添加song以及during 歌曲时长属性
@@ -39,12 +41,12 @@ class AudioInfo(Container):
             max=100,
             divisions=100,
             label="{value}%",
-            # on_change=self.ld_change,
+            on_change=self.ld_change,
         )
         self.play_btn = IconButton(
             icon=icons.PLAY_CIRCLE,
             selected_icon=icons.PAUSE_CIRCLE,
-            # on_click=self.toggle_play,
+            on_click=self.toggle_play,
             icon_size=40,
         )
         self.volume_icon = Icon(name=icons.VOLUME_DOWN)
@@ -85,13 +87,13 @@ class AudioInfo(Container):
                                     IconButton(
                                         icon=icons.SKIP_PREVIOUS,
                                         icon_size=40,
-                                        # on_click=self.previous_track,
+                                        on_click=self.previous_track,
                                     ),
                                     self.play_btn,
                                     IconButton(
                                         icon=icons.SKIP_NEXT,
                                         icon_size=40,
-                                        # on_click=self.next_track,
+                                        on_click=self.next_track,
                                     ),
                                     self.volume_icon,
                                     ft.Slider(
@@ -102,7 +104,7 @@ class AudioInfo(Container):
                                         divisions=100,
                                         value=50,
                                         label="{value}",
-                                        # on_change=self.volume_change,
+                                        on_change=self.volume_change,
                                     ),
                                     IconButton(
                                         icon=icons.PLAYLIST_ADD_ROUNDED,
@@ -134,19 +136,174 @@ class AudioInfo(Container):
         )
 
     # 添加到overlay中,修改播放内容
+    # songlist中的歌曲列表, overlay中的列表(播放列表)
     def play_music(self, song: DataSong):
-        print(song)
-        self.playing_audio = PlayAudio(
-            song=song,
-            src=song.url,
-            autoplay=True,
-        )
-        self.page.overlay.append(self.playing_audio)
-        self.page.update()
-        self.playing_audio.autoplay = False
+        # 判断是否正式播放的歌曲
+        # 获取播放
+        print(f"播放{song.name}")
+        if self.playing_audio and song == self.playing_audio.song:
+            if gl["state"] == "playing":
+                print(f"{song.name}同一首歌曲,并且正在播放,不做任何操作")
+                pass
+            else:
+                print("同一首歌曲,没有播放,开启播放")
+                self.play()
+        else:
+            self.set_Info(song)
+            _index = self.isInOverlay(song)
+            print(f"overlay中的索引{_index}")
+            if _index == -1:
+                print(f"新歌曲:{song.name}")
+                if self.playing_audio:
+                    self.playing_audio.release()
+                self.playing_audio = PlayAudio(
+                    song=song,
+                    src=song.url,
+                    autoplay=True,
+                    on_duration_changed=self.during_changed,
+                    on_position_changed=self.position_changed,
+                    on_state_changed=self.check_state,
+                )
+                self.page.overlay.append(self.playing_audio)
+                self.page.update()
+                self.playing_audio.autoplay = False
+                gl["index"] = len(self.page.overlay) - 1
+            else:
+                print("老歌曲")
+                gl["index"] = _index
+                self.playing_audio.release()
+                self.playing_audio = self.page.overlay[_index]
+            self.play()
+
+    def play(self):
+        if gl["state"] == "pause":
+            self.playing_audio.resume()
+        else:
+            self.playing_audio.volume = gl["volume"]
+            self.song_slider.value = "0"
+            self.playing_audio.play()
+        gl["state"] = "playing"
         self.play_btn.selected = True
-        self.playing_audio.play()
-        self.song_slider.value = "0"
+
+    def play_new(self):
+        # cover 处理
+        _audio: PlayAudio = self.page.overlay[gl["index"]]
+        _isLocal = _audio.song.isLocal
+        if _isLocal:
+            if _audio.song.cover != "album.png":
+                self.song_cover.src = None
+                self.song_cover.src_base64 = _audio.song.cover
+            else:
+                self.song_cover.src_base64 = None
+                self.song_cover.src = "album.png"
+        self.song_name.value = _audio.song.name
+        self.song_artist.value = _audio.song.singer
+        self.current_time.value = "00:00"
+        self.total_time.value = ms_to_time(_audio.during)
+        if gl["state"] == "playing":
+            _audio.volume = gl["volume"]
+            _audio.play()
+
+    def previous_track(self, e):
+        self.page.overlay[gl["index"]].release()
+        self.page.overlay[gl["index"]].update()
+        gl["index"] = gl["index"] - 1
+        if gl["index"] == 0:
+            gl["index"] = len(self.page.overlay) - 1
+        self.play_new()
+        self.page.update()
+
+    def next_track(self, e):
+        self.page.overlay[gl["index"]].release()
+        self.page.overlay[gl["index"]].update()
+        gl["index"] = gl["index"] + 1
+        if gl["index"] == len(self.page.overlay):
+            gl["index"] = 1
+        self.play_new()
+        self.page.update()
+
+    def isInOverlay(self, song: DataSong):
+        if len(self.page.overlay) > 0:
+            for index, _playing_audio in enumerate(self.page.overlay[1:]):
+                if _playing_audio.song.url == song.url:
+                    return index + 1
+        return -1
+
+    def set_Info(self, song: DataSong):
+        self.song_name.value = song.name
+        self.song_artist.value = song.singer
+        if song.isLocal:
+            if song.cover != "album.png":
+                self.song_cover.src_base64 = song.cover
+            else:
+                self.song_cover.src_base64 = None
+                self.song_cover.src = song.cover
+        self.update()
+
+    def check_state(self, e):
+        if e.data == "completed":
+            print("complete!")
+            self.page.overlay[gl["index"]].release()
+            self.page.overlay[gl["index"]].update()
+            gl["index"] = gl["index"] + 1
+            if gl["index"] == len(self.page.overlay):
+                gl["index"] = 1
+            self.play_new()
+            self.play_btn.icon = icons.PAUSE_CIRCLE
+            self.page.update()
+
+    def during_changed(self, e):
+        during = int(e.data)
+        self.playing_audio.update_during(during)
+        self.total_time.value = ms_to_time(during)
+        self.update()
+
+    def position_changed(self, e):
+        during = self.page.overlay[gl["index"]].during
+        if during:
+            self.current_time.value = ms_to_time(int(e.data))
+            self.song_slider.value = int(int(e.data) / during * 100)
+            self.update()
+
+    def ld_change(self, e):
+        v = e.control.value  # 获取当前距离 v百分比
+        audio = self.page.overlay[gl["index"]]
+        audio_info = TinyTag.get(audio.src)
+        postion = int(v * audio_info.duration * 10)
+        self.page.overlay[gl["index"]].seek(postion)
+
+    def resume(self):
+        print("继续")
+        self.page.overlay[gl["index"]].resume()
+        self.play_btn.selected = True
+        gl["state"] = "playing"
+        self.update()
+
+    def pause(self):
+        print("暂停")
+        self.page.overlay[gl["index"]].pause()
+        self.play_btn.selected = False
+        gl["state"] = "pause"
+        self.update()
+
+    def toggle_play(self, e):
+        print("toggle", e.control.selected)
+        if e.control.selected:
+            self.pause()
+        else:
+            self.resume()
+
+    def volume_change(self, e):
+        v = e.control.value
+        self.page.overlay[gl["index"]].volume = 0.01 * v
+        gl["volume"] = 0.01 * v
+        if v == 0:
+            self.volume_icon.name = icons.VOLUME_OFF
+        elif 0 < v <= 50:
+            self.volume_icon.name = icons.VOLUME_DOWN
+        elif 50 < v:
+            self.volume_icon.name = icons.VOLUME_UP
+        self.page.update()
 
 
 class NavigationBar(ft.Stack):

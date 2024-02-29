@@ -6,23 +6,18 @@ from methods.getlocal import DataSong, LocalSong
 
 
 # 点击 1.播放歌曲 2.更新page.overlay内容 3.更改index
-#
 class Song(Container):
-    def __init__(self, song: DataSong, songItemClick):
+    def __init__(self, song: DataSong, song_list, songItemClick):
 
         self.song: DataSong = song
+        self.song_list = song_list
         self.songItemClick = songItemClick
         self.cover = ft.Image(
             width=40, height=40, border_radius=10, fit="cover", src=song.cover
         )
         if song.isLocal:
-            # a_info = TinyTag.get(song.url, image=True)
-            # img = a_info.get_image()
             if song.cover != "album.png":
                 self.cover.src_base64 = song.cover
-            # if img:
-            #     img64 = byte_to_base64(img)
-            #     self.cover.src_base64 = img64
         self.name = Text(
             song.name,
             width=100,
@@ -66,7 +61,13 @@ class Song(Container):
             self.bgcolor = colors.BLUE_GREY_700
             self.opacity = 1
             self.update()
-            self.songItemClick(self.song)  # 点击操作 AudioInfo.play_music(songItem)
+            # 循环所有子项
+            for _song in self.song_list.controls:
+                if _song.selected:  # 如果子项之前被点击
+                    if _song != self:  # 如果不是当前
+                        _song.un_select()
+            self.songItemClick(self.song)
+
         else:
             self.bgcolor = colors.BLUE_GREY_300
             self.opacity = 0.7
@@ -138,8 +139,9 @@ class ViewPage(Stack):
         if songPath != None:
             self.songs = LocalSong.getFiles(songPath)
             for song in self.songs:
-                self.song_list.controls.append(Song(song, self.songItemClick))
-
+                self.song_list.controls.append(
+                    Song(song, self.song_list, self.songItemClick)
+                )
             self.page.update()
 
     def init_event(self):
