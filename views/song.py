@@ -107,7 +107,7 @@ class AudioInfo(Container):
                                         on_change=self.volume_change,
                                     ),
                                     IconButton(
-                                        icon=icons.PLAYLIST_ADD_ROUNDED,
+                                        icon=icons.PLAYLIST_PLAY,
                                         # on_click=lambda _: pick_files_dialog.pick_files(
                                         #     allow_multiple=True,
                                         #     file_type=FilePickerFileType.AUDIO,
