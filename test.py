@@ -5,7 +5,7 @@ rightFlag = False
 
 
 def main(page: ft.Page):
-    page.title = "上中下布局"
+    page.title = "复杂布局"
     page.padding = 0
     page.window_width = 500
     page.window_height = 600
@@ -28,7 +28,7 @@ def main(page: ft.Page):
 
     top_widget = ft.Container(
         bgcolor=ft.colors.YELLOW,
-        content=ft.Text("这是一段文件"),
+        content=ft.Text("这是一段文字"),
         height=page.window_height - 130,
         width=page.window_width,
         expand=1,
@@ -43,7 +43,8 @@ def main(page: ft.Page):
             top_widget.visible = False
         else:
             top_widget.visible = True
-        page.update()
+        top_widget.update()
+        # page.update()
 
     right_width = ft.Container(
         bgcolor=ft.colors.GREEN_100,
