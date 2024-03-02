@@ -7,6 +7,8 @@ from methods.getlocal import DataSong
 from settings import song_tabs
 from utils import ms_to_time
 from tinytag import TinyTag
+from .my_list import ViewPage as MyList
+from .song_local import ViewPage as SongList
 
 gl = {"index": 1, "state": "", "song_list": [], "volume": 0.5}
 
@@ -24,8 +26,9 @@ class PlayAudio(ft.Audio):
 
 # 音乐显示控制栏
 class AudioInfo(Container):
-    def __init__(self, page):
+    def __init__(self, page, showCont):
         self.page = page
+        self.showCont = showCont
         self.playing_audio: Optional[PlayAudio] = None
         self.song: Optional[DataSong] = None
         self.is_sliding = False
@@ -50,16 +53,15 @@ class AudioInfo(Container):
             icon_size=40,
         )
         self.volume_icon = Icon(name=icons.VOLUME_DOWN)
-        self.song_cover = Image(
+        self.song_img = Image(
             src=f"assets/album.png",
             width=90,
             height=90,
             fit=ft.ImageFit.CONTAIN,
-            rotate=ft.transform.Rotate(0, alignment=ft.alignment.center),
-            animate_rotation=ft.animation.Animation(
-                300, ft.AnimationCurve.EASE_IN_CIRC
-            ),
         )
+
+        self.song_cover = Container(content=self.song_img, on_click=self.showCont[0])
+
         self.cont = Container(
             content=Row(
                 controls=[
@@ -108,10 +110,7 @@ class AudioInfo(Container):
                                     ),
                                     IconButton(
                                         icon=icons.PLAYLIST_PLAY,
-                                        # on_click=lambda _: pick_files_dialog.pick_files(
-                                        #     allow_multiple=True,
-                                        #     file_type=FilePickerFileType.AUDIO,
-                                        # ),
+                                        on_click=self.showCont[1],
                                     ),
                                 ],
                             ),
@@ -191,11 +190,11 @@ class AudioInfo(Container):
         _isLocal = _audio.song.isLocal
         if _isLocal:
             if _audio.song.cover != "album.png":
-                self.song_cover.src = None
-                self.song_cover.src_base64 = _audio.song.cover
+                self.song_img.src = None
+                self.song_img.src_base64 = _audio.song.cover
             else:
-                self.song_cover.src_base64 = None
-                self.song_cover.src = "album.png"
+                self.song_img.src_base64 = None
+                self.song_img.src = "album.png"
         self.song_name.value = _audio.song.name
         self.song_artist.value = _audio.song.singer
         self.current_time.value = "00:00"
@@ -234,10 +233,10 @@ class AudioInfo(Container):
         self.song_artist.value = song.singer
         if song.isLocal:
             if song.cover != "album.png":
-                self.song_cover.src_base64 = song.cover
+                self.song_img.src_base64 = song.cover
             else:
-                self.song_cover.src_base64 = None
-                self.song_cover.src = song.cover
+                self.song_img.src_base64 = None
+                self.song_img.src = song.cover
         self.update()
 
     def check_state(self, e):
@@ -306,60 +305,105 @@ class AudioInfo(Container):
         self.page.update()
 
 
-class NavigationBar(ft.Stack):
-    def __init__(self, page: ft.Page, songItemClick):
-        self.page = page
-        self.songItemClick = songItemClick
-        self.tabs = ft.Tabs(expand=1)
-        self.tabs_list = []
-        for navigation in song_tabs:
-            content = self.get_page(navigation[1])  # 内容
-            if not content:
-                continue
-            text = navigation[0]
-            self.tabs_list.append(ft.Tab(content=content, text=text))
-        self.tabs.tabs.extend(self.tabs_list)
-        self.tabs.on_change = lambda e: self.tab_init_event(e.data)  # 点击后的执行
-        super(NavigationBar, self).__init__(
-            controls=[
-                self.tabs,
-            ],
-            expand=True,
-        )
-
-    def tab_init_event(self, index):
-        index = int(index)
-        if hasattr(self.tabs_list[index].content, "init_event"):
-            getattr(self.tabs_list[index].content, "init_event")()
-
-    def get_page(self, module_name):
-        try:
-            module_file = import_module("views." + module_name)
-            return module_file.ViewPage(self.page, self.songItemClick)
-        except Exception as e:
-            print("getpage", e)
-
-
 class ViewPage(ft.Stack):
     global gl
 
-    def __init__(self, page):
+    def __init__(self, page: ft.Page):
         self.is_first = True
         self.page = page
-        self.t = NavigationBar(page, self.songItemClick)
-        self.b = AudioInfo(page)
-        self.c = Column([self.t, self.b], expand=True, spacing=0)
+        # tabs
+        self.ta = ft.Tabs(
+            expand=True,
+            selected_index=0,
+            tabs=[
+                ft.Tab(text="本地歌曲", content=SongList(page, self.songItemClick)),
+                ft.Tab(text="我的歌单", content=MyList(page, self.songItemClick)),
+            ],
+        )
+
+        # 播放控制
+        self.ctr = AudioInfo(page, [self.showLrc, self.showSonglist])
+        self.c = Column([self.ta, self.ctr], expand=True, spacing=0)
+        self.lrc = Container(
+            bgcolor=ft.colors.GREY_200,
+            content=ft.Column(
+                controls=[
+                    Row(
+                        [
+                            ft.Image(width=300, height=300, src="album.png"),
+                            Container(
+                                width=300, content=Text("歌词显示::::333333333333")
+                            ),
+                        ],
+                        expand=True,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                ],
+            ),
+            margin=ft.margin.only(bottom=105),
+            visible=False,
+        )
+
+        self.song_list = ft.ListView(width=300, spacing=10)
+
+        # for i in range(10):
+        #     self.song_list.controls.append(ft.Text(f"{i+1} 、第{i+1}首歌曲 "))
+        # self.page.update()
+
+        self.song_cont = ft.Container(
+            content=self.song_list,
+            right=10,
+            bottom=110,
+            bgcolor=ft.colors.AMBER_200,
+            offset=ft.transform.Offset(2, 0),
+        )
+        # self.freshSonglist()
+
         super(ViewPage, self).__init__(
-            controls=[self.c],
+            controls=[self.c, self.lrc, self.song_cont],
             expand=True,
         )
 
+    def freshSonglist(self):
+        songLength = len(self.page.overlay)
+        if songLength > 1:
+            self.song_list.clean()
+            for index, _playing_audio in enumerate(self.page.overlay[1:]):
+                _s: DataSong = _playing_audio.song
+                if _playing_audio.during:
+                    _duration = ms_to_time(_playing_audio.during)
+                else:
+                    _duration = ""
+                song_item = ft.Text(f"{index+1}、{_s.name}  {_s.singer} {_duration}")
+                self.song_list.controls.append(song_item)
+            self.song_list.update()
+        else:
+            self.song_list.clean()
+            song_item = ft.Text(f"当前没有歌曲")
+            self.song_list.controls.append(song_item)
+            self.song_list.update()
+
+    def showLrc(self, e):
+        self.lrc.visible = not self.lrc.visible
+        self.page.update()
+
+    def showSonglist(self, e):
+        offx = self.song_cont.offset.x
+        self.freshSonglist()
+        if offx == 2:
+            self.song_cont.offset = ft.transform.Offset(0, 0)
+        else:
+            self.song_cont.offset = ft.transform.Offset(2, 0)
+        self.song_cont.update()
+
     # 获取子项点击后的操作
     def songItemClick(self, song: DataSong):
-        self.b.play_music(song)
+        self.ctr.play_music(song)
+        self.freshSonglist()
 
     def init_event(self):  # 获取tabs第一页内容
-        search_view = self.t.controls[0].tabs[0].content
+        pass
+        # search_view = self.t.controls[0].tabs[0].content
 
         # if not search_view.right_widget.music_list.list.controls:
         #     search_view.right_widget.search_content.search(None)
