@@ -9,6 +9,7 @@ from utils import ms_to_time
 from tinytag import TinyTag
 from .my_list import ViewPage as MyList
 from .song_local import ViewPage as SongList
+from functools import partial
 
 gl = {"index": 1, "state": "", "song_list": [], "volume": 0.5}
 
@@ -22,6 +23,43 @@ class PlayAudio(ft.Audio):
 
     def update_during(self, during):
         self.during = during
+
+
+# 播放列表类
+class audioTile(ft.UserControl):
+    def __init__(self, page, song: DataSong, _index, duration):
+        super().__init__()
+        self.page = page
+        self.song = song
+        self._index = _index
+        self.index_text = Text(f"{_index}、", width=20)
+        self.name_text = Text(song.name, width=100, no_wrap=True)
+        self.singer_text = Text(song.singer, width=50, no_wrap=True)
+        self.duration_text = Text(duration, width=40, no_wrap=True)
+
+    def build(self):
+        return ft.Row(
+            controls=[
+                self.index_text,
+                self.name_text,
+                self.singer_text,
+                self.duration_text,
+                ft.IconButton(
+                    icon=ft.icons.PLAY_CIRCLE_FILLED_OUTLINED,
+                    on_click=self.playSong,
+                ),
+                ft.IconButton(
+                    icon=ft.icons.DELETE_FOREVER,
+                    on_click=self.playSong,
+                ),
+            ],
+            width=300,
+        )
+
+    def playSong(self, e):
+        self.page.overlay[gl["index"]].release()
+        self.page.overlay[gl["index"]].update()
+        gl["index"] = self._index
 
 
 # 音乐显示控制栏
@@ -344,37 +382,62 @@ class ViewPage(ft.Stack):
             visible=False,
         )
 
-        self.song_list = ft.ListView(width=300, spacing=10)
-
-        # for i in range(10):
-        #     self.song_list.controls.append(ft.Text(f"{i+1} 、第{i+1}首歌曲 "))
-        # self.page.update()
+        self.song_list = ft.ListView(width=400, spacing=10)
 
         self.song_cont = ft.Container(
             content=self.song_list,
             right=10,
             bottom=110,
-            bgcolor=ft.colors.AMBER_200,
+            bgcolor=ft.colors.SURFACE_VARIANT,
+            border_radius=6,
+            padding=8,
             offset=ft.transform.Offset(2, 0),
         )
-        # self.freshSonglist()
 
         super(ViewPage, self).__init__(
             controls=[self.c, self.lrc, self.song_cont],
             expand=True,
         )
 
+    def playsong(self, index, e):
+        if index != gl["index"]:
+            self.page.overlay[gl["index"]].release()
+            self.page.overlay[gl["index"]].update()
+            gl["index"] = index
+            self.ctr.play_new()
+            self.page.update()
+
     def freshSonglist(self):
         songLength = len(self.page.overlay)
         if songLength > 1:
             self.song_list.clean()
+            song_item = ft.Text(f"正在播放", size=20, weight=ft.FontWeight.W_900)
+            self.song_list.controls.append(song_item)
             for index, _playing_audio in enumerate(self.page.overlay[1:]):
                 _s: DataSong = _playing_audio.song
                 if _playing_audio.during:
                     _duration = ms_to_time(_playing_audio.during)
                 else:
                     _duration = ""
-                song_item = ft.Text(f"{index+1}、{_s.name}  {_s.singer} {_duration}")
+                song_item = Container(
+                    content=Row(
+                        controls=[
+                            Text(f"{index+1}、", width=20),
+                            Text(_s.name, width=100, no_wrap=True),
+                            Text(_s.singer, width=50, no_wrap=True),
+                            Text(_duration, width=40, no_wrap=True),
+                            ft.IconButton(
+                                icon=ft.icons.PLAY_CIRCLE_FILLED_OUTLINED,
+                                on_click=partial(self.playsong, index + 1),
+                            ),
+                            ft.IconButton(
+                                icon=ft.icons.DELETE_FOREVER,
+                                # on_click=self.playSong,
+                            ),
+                        ],
+                        spacing=2,
+                    ),
+                )
                 self.song_list.controls.append(song_item)
             self.song_list.update()
         else:
