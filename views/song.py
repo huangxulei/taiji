@@ -2,9 +2,7 @@ from typing import Optional
 import flet as ft
 from flet import Text, Container, Column, Row, IconButton, Icon, Image, colors, icons
 
-from importlib import import_module
 from methods.getlocal import DataSong
-from settings import song_tabs
 from utils import ms_to_time
 from tinytag import TinyTag
 from .my_list import ViewPage as MyList
@@ -18,11 +16,7 @@ gl = {"index": 1, "state": "", "song_list": [], "volume": 0.5}
 class PlayAudio(ft.Audio):
     def __init__(self, song: DataSong, *args, **kwargs):
         self.song = song
-        self.during: Optional[int] = None
         super(PlayAudio, self).__init__(*args, **kwargs)
-
-    def update_during(self, during):
-        self.during = during
 
 
 # 音乐显示控制栏
@@ -136,6 +130,7 @@ class AudioInfo(Container):
         )
 
     def clear_view(self):
+        self.playing_audio = None
         self.song_name.value = ""
         self.song_artist.value = ""
         self.current_time.value = "00:00"
@@ -143,13 +138,20 @@ class AudioInfo(Container):
         self.play_btn.selected = False
         self.song_img.src_base64 = None
         self.song_img.src = "album.png"
-        self.update()
+        self.page.update()
+
+    def initPlayAudio(self, song: DataSong, aplay):
+        return PlayAudio(
+            song=song,
+            src=song.url,
+            autoplay=aplay,
+            on_position_changed=self.position_changed,
+            on_state_changed=self.check_state,
+        )
 
     # 添加到overlay中,修改播放内容
     # songlist中的歌曲列表, overlay中的列表(播放列表)
     def play_music(self, song: DataSong):
-        # 判断是否正式播放的歌曲
-        # 获取播放
         print(f"播放{song.name}")
         if self.playing_audio and song == self.playing_audio.song:
             if gl["state"] == "playing":
@@ -170,7 +172,6 @@ class AudioInfo(Container):
                     song=song,
                     src=song.url,
                     autoplay=True,
-                    on_duration_changed=self.during_changed,
                     on_position_changed=self.position_changed,
                     on_state_changed=self.check_state,
                 )
@@ -191,6 +192,7 @@ class AudioInfo(Container):
         else:
             self.playing_audio.volume = gl["volume"]
             self.song_slider.value = "0"
+            self.total_time.value = ms_to_time(self.playing_audio.song.duration)
             self.playing_audio.play()
         gl["state"] = "playing"
         self.play_btn.selected = True
@@ -209,10 +211,10 @@ class AudioInfo(Container):
         self.song_name.value = _audio.song.name
         self.song_artist.value = _audio.song.singer
         self.current_time.value = "00:00"
-        self.total_time.value = ms_to_time(_audio.during)
-        if gl["state"] == "playing":
-            _audio.volume = gl["volume"]
-            _audio.play()
+        self.total_time.value = ms_to_time(_audio.song.duration)
+        _audio.volume = gl["volume"]
+        self.play_btn.selected = True
+        _audio.play()
 
     def previous_track(self, e):
         self.page.overlay[gl["index"]].release()
@@ -248,6 +250,7 @@ class AudioInfo(Container):
             else:
                 self.song_img.src_base64 = None
                 self.song_img.src = song.cover
+        self.total_time.value = song.duration
         self.update()
 
     def check_state(self, e):
@@ -262,18 +265,11 @@ class AudioInfo(Container):
             self.play_btn.icon = icons.PAUSE_CIRCLE
             self.page.update()
 
-    def during_changed(self, e):
-        during = int(e.data)
-        self.playing_audio.update_during(during)
-        self.total_time.value = ms_to_time(during)
-        self.update()
-
     def position_changed(self, e):
-        during = self.playing_audio.during
-        if during:
-            self.current_time.value = ms_to_time(int(e.data))
-            self.song_slider.value = int(int(e.data) / during * 100)
-            self.update()
+        during = self.playing_audio.song.duration
+        self.current_time.value = ms_to_time(int(e.data))
+        self.song_slider.value = int(int(e.data) / during * 100)
+        self.update()
 
     def ld_change(self, e):
         v = e.control.value  # 获取当前距离 v百分比
@@ -327,7 +323,10 @@ class ViewPage(ft.Stack):
             expand=True,
             selected_index=0,
             tabs=[
-                ft.Tab(text="本地歌曲", content=SongList(page, self.songItemClick)),
+                ft.Tab(
+                    text="本地歌曲",
+                    content=SongList(page, self.songItemClick, self.playAll),
+                ),
                 ft.Tab(text="我的歌单", content=MyList(page, self.songItemClick)),
             ],
         )
@@ -355,10 +354,18 @@ class ViewPage(ft.Stack):
             visible=False,
         )
 
-        self.song_list = ft.ListView(width=400, spacing=10)
-
+        self.song_list = ft.ListView(width=400, spacing=10, height=400)
+        self.song_list_title = ft.Text(
+            "当前没有歌曲", size=20, weight=ft.FontWeight.W_900
+        )
         self.song_cont = ft.Container(
-            content=self.song_list,
+            content=ft.Column(
+                controls=[
+                    self.song_list_title,
+                    self.song_list,
+                ],
+                spacing=10,
+            ),
             right=10,
             bottom=110,
             bgcolor=ft.colors.SURFACE_VARIANT,
@@ -402,19 +409,18 @@ class ViewPage(ft.Stack):
         songLength = len(self.page.overlay)
         if songLength > 1:
             self.song_list.clean()
-            song_item = ft.Text(f"正在播放", size=20, weight=ft.FontWeight.W_900)
-            self.song_list.controls.append(song_item)
+            self.song_list_title.value = "正在播放"
             for index, _playing_audio in enumerate(self.page.overlay[1:]):
                 _s: DataSong = _playing_audio.song
-                if _playing_audio.during:
-                    _duration = ms_to_time(_playing_audio.during)
+                if _s.duration:
+                    _duration = ms_to_time(_s.duration)
                 else:
                     _duration = ""
                 song_item = Container(
                     content=Row(
                         controls=[
-                            Text(f"{index+1}、", width=20),
-                            Text(_s.name, width=100, no_wrap=True),
+                            Text(f"{index+1}、", width=30),
+                            Text(_s.name, width=120, no_wrap=True),
                             Text(_s.singer, width=50, no_wrap=True),
                             Text(_duration, width=40, no_wrap=True),
                             ft.IconButton(
@@ -433,9 +439,8 @@ class ViewPage(ft.Stack):
             self.song_list.update()
         else:
             self.song_list.clean()
-            song_item = ft.Text(f"当前没有歌曲")
-            self.song_list.controls.append(song_item)
-            self.song_list.update()
+            self.song_list_title.value = "当前没有歌曲"
+            self.update()
 
     def showLrc(self, e):
         self.lrc.visible = not self.lrc.visible
@@ -454,6 +459,27 @@ class ViewPage(ft.Stack):
     def songItemClick(self, song: DataSong):
         self.ctr.play_music(song)
         self.freshSonglist()
+
+    def playAll(self, songgrid: ft.GridView):
+        if songgrid.controls:
+
+            if len(self.page.overlay) > 1 and self.page.overlay[gl["index"]]:
+                self.page.overlay[gl["index"]].release()
+            first = self.page.overlay[0]
+            self.page.overlay.clear()
+            self.page.overlay.append(first)
+            for index, _song in enumerate(songgrid.controls):
+                s = _song.song
+                flag = False
+                if index == 0:
+                    flag = True
+                pa = self.ctr.initPlayAudio(s, flag)
+                self.page.overlay.append(pa)
+            self.page.update()
+            self.page.overlay[1].autoplay = False
+            gl["index"] = 1
+            self.ctr.play_new()
+            self.freshSonglist()
 
     def init_event(self):  # 获取tabs第一页内容
         pass

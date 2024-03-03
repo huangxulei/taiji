@@ -1,19 +1,6 @@
-from typing import Optional
 import flet as ft
 from flet import Stack, Text, Container, ElevatedButton, Row, icons, colors
-import os
 from methods.getlocal import DataSong, LocalSong
-
-
-# 继承audio控件,添加song以及during 歌曲时长属性
-class PlayAudio(ft.Audio):
-    def __init__(self, song: DataSong, *args, **kwargs):
-        self.song = song
-        self.during: Optional[int] = None
-        super(PlayAudio, self).__init__(*args, **kwargs)
-
-    def update_during(self, during):
-        self.during = during
 
 
 # 点击 1.播放歌曲 2.更新page.overlay内容 3.更改index
@@ -93,9 +80,10 @@ class Song(Container):
 
 
 class ViewPage(Stack):
-    def __init__(self, page, songItemClick):
+    def __init__(self, page, songItemClick, playAll):
         self.page = page
         self.songItemClick = songItemClick
+        self.playAll = playAll
         self.songs = []
         self.pick_files_dialog = ft.FilePicker(on_result=self.pick_files_result)
         self.page.overlay.append(self.pick_files_dialog)
@@ -106,21 +94,30 @@ class ViewPage(Stack):
             max_extent=page.window_width // 3,
             padding=10,
         )
+        self.add_btn = ElevatedButton(
+            "添加音乐",
+            icon=icons.FILE_OPEN,
+            on_click=lambda _: self.pick_files_dialog.get_directory_path(),
+        )
+        self.clean_btn = ElevatedButton(
+            "清 空",
+            icon=icons.CLEAR,
+            on_click=self.clear_list,
+            disabled=True,
+        )
+        self.playall_btn = ElevatedButton(
+            "播放所有",
+            icon=icons.PLAYLIST_PLAY,
+            on_click=self.play_all,
+            disabled=True,
+        )
+
         self.panel = Container(
             margin=ft.margin.only(left=10, top=10),
             content=ft.Column(
                 controls=[
                     Row(
-                        controls=[
-                            ElevatedButton(
-                                "添加音乐",
-                                icon=icons.FILE_OPEN,
-                                on_click=lambda _: self.pick_files_dialog.get_directory_path(),
-                            ),
-                            ElevatedButton(
-                                "清 空", icon=icons.CLEAR, on_click=self.clear_list
-                            ),
-                        ],
+                        controls=[self.add_btn, self.clean_btn, self.playall_btn],
                         spacing=20,
                     ),
                     Row(
@@ -137,6 +134,9 @@ class ViewPage(Stack):
             expand=True,
         )
 
+    def play_all(self, e):
+        self.playAll(self.song_list)
+
     def pick_files_result(self, e: ft.FilePickerResultEvent):
         songPath = e.path if e.path else None
         if songPath != None:
@@ -145,6 +145,7 @@ class ViewPage(Stack):
                 self.song_list.controls.append(
                     Song(song, self.song_list, self.songItemClick)
                 )
+            self.setBtn(True)
             self.page.update()
 
     def init_event(self):
@@ -152,3 +153,18 @@ class ViewPage(Stack):
 
     def clear_list(self, e):
         self.song_list.clean()
+        self.setBtn(False)
+        self.update()
+
+    def setBtn(self, flag):
+        if flag:
+            self.clean_btn.disabled = False
+            self.playall_btn.disabled = False
+        else:
+            self.clean_btn.disabled = True
+            self.playall_btn.disabled = True
+
+    # def playAll(self, e: ElevatedButton):
+    #     if self.song_list.controls:
+    #         self.play_all(self.song_list.controls)
+    # 添加所有

@@ -11,6 +11,7 @@ class DataSong:
     cover: str  # 封面
     name: str  # 歌曲名称
     singer: str  # 歌手名称
+    duration: int  # 歌曲食材
     url: Optional[str] = field(default=None)  # 音乐链接
 
 
@@ -45,6 +46,7 @@ class LocalSong:
             "cover": cover,
             "name": song_info.title,
             "singer": song_info.artist,
+            "duration": song_info.duration * 1000,
             "url": file_path,
         }
         return result
