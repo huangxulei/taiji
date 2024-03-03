@@ -25,43 +25,6 @@ class PlayAudio(ft.Audio):
         self.during = during
 
 
-# 播放列表类
-class audioTile(ft.UserControl):
-    def __init__(self, page, song: DataSong, _index, duration):
-        super().__init__()
-        self.page = page
-        self.song = song
-        self._index = _index
-        self.index_text = Text(f"{_index}、", width=20)
-        self.name_text = Text(song.name, width=100, no_wrap=True)
-        self.singer_text = Text(song.singer, width=50, no_wrap=True)
-        self.duration_text = Text(duration, width=40, no_wrap=True)
-
-    def build(self):
-        return ft.Row(
-            controls=[
-                self.index_text,
-                self.name_text,
-                self.singer_text,
-                self.duration_text,
-                ft.IconButton(
-                    icon=ft.icons.PLAY_CIRCLE_FILLED_OUTLINED,
-                    on_click=self.playSong,
-                ),
-                ft.IconButton(
-                    icon=ft.icons.DELETE_FOREVER,
-                    on_click=self.playSong,
-                ),
-            ],
-            width=300,
-        )
-
-    def playSong(self, e):
-        self.page.overlay[gl["index"]].release()
-        self.page.overlay[gl["index"]].update()
-        gl["index"] = self._index
-
-
 # 音乐显示控制栏
 class AudioInfo(Container):
     def __init__(self, page, showCont):
@@ -172,6 +135,16 @@ class AudioInfo(Container):
             ),
         )
 
+    def clear_view(self):
+        self.song_name.value = ""
+        self.song_artist.value = ""
+        self.current_time.value = "00:00"
+        self.total_time.value = "00:00"
+        self.play_btn.selected = False
+        self.song_img.src_base64 = None
+        self.song_img.src = "album.png"
+        self.update()
+
     # 添加到overlay中,修改播放内容
     # songlist中的歌曲列表, overlay中的列表(播放列表)
     def play_music(self, song: DataSong):
@@ -191,7 +164,7 @@ class AudioInfo(Container):
             print(f"overlay中的索引{_index}")
             if _index == -1:
                 print(f"新歌曲:{song.name}")
-                if self.playing_audio:
+                if isinstance(self.playing_audio, PlayAudio):
                     self.playing_audio.release()
                 self.playing_audio = PlayAudio(
                     song=song,
@@ -223,8 +196,8 @@ class AudioInfo(Container):
         self.play_btn.selected = True
 
     def play_new(self):
-        # cover 处理
         _audio: PlayAudio = self.page.overlay[gl["index"]]
+        self.playing_audio = _audio
         _isLocal = _audio.song.isLocal
         if _isLocal:
             if _audio.song.cover != "album.png":
@@ -296,7 +269,7 @@ class AudioInfo(Container):
         self.update()
 
     def position_changed(self, e):
-        during = self.page.overlay[gl["index"]].during
+        during = self.playing_audio.during
         if during:
             self.current_time.value = ms_to_time(int(e.data))
             self.song_slider.value = int(int(e.data) / during * 100)
@@ -399,13 +372,31 @@ class ViewPage(ft.Stack):
             expand=True,
         )
 
-    def playsong(self, index, e):
+    def playSong(self, index, e):
         if index != gl["index"]:
             self.page.overlay[gl["index"]].release()
             self.page.overlay[gl["index"]].update()
             gl["index"] = index
             self.ctr.play_new()
             self.page.update()
+
+    def delSong(self, index, e):
+        if index == gl["index"]:  # 删除单曲,播放下一首歌曲
+            self.page.overlay[gl["index"]].release()
+            del self.page.overlay[gl["index"]]
+            self.page.update()
+            if len(self.page.overlay) == 1:  # 没有歌曲
+                print("没有歌曲")
+                self.ctr.clear_view()
+            else:  # 下一首
+                if gl["index"] == len(self.page.overlay):
+                    gl["index"] = 1
+                self.ctr.play_new()
+                self.page.update()
+        else:
+            del self.page.overlay[index]
+            # self.page.overlay.update()
+        self.freshSonglist()
 
     def freshSonglist(self):
         songLength = len(self.page.overlay)
@@ -428,11 +419,11 @@ class ViewPage(ft.Stack):
                             Text(_duration, width=40, no_wrap=True),
                             ft.IconButton(
                                 icon=ft.icons.PLAY_CIRCLE_FILLED_OUTLINED,
-                                on_click=partial(self.playsong, index + 1),
+                                on_click=partial(self.playSong, index + 1),
                             ),
                             ft.IconButton(
                                 icon=ft.icons.DELETE_FOREVER,
-                                # on_click=self.playSong,
+                                on_click=partial(self.delSong, index + 1),
                             ),
                         ],
                         spacing=2,
